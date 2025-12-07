@@ -57,9 +57,9 @@ with st.form("prediction_form"):
         Curricular_units_1st_sem_evaluations = st.number_input("Curricular Units 1st Sem (evaluations)", min_value=0, max_value=100, step=1)
         Curricular_units_1st_sem_grade = st.number_input("Curricular Units 1st Sem (grade)", min_value=0.0, max_value=20.0, step=0.1)
 
-        Curricular_units_2st_sem_enrolled = st.number_input("Curricular Units 2st Sem (enrolled)", min_value=0, max_value=40, step=1)
-        Curricular_units_2st_sem_approved = st.number_input("Curricular Units 2st Sem (approved)", min_value=0, max_value=40, step=1)
-        Curricular_units_2st_sem_evaluations = st.number_input("Curricular Units 2st Sem (evaluations)", min_value=0, max_value=100, step=1)
+        Curricular_units_2nd_sem_enrolled = st.number_input("Curricular Units 2nd Sem (enrolled)", min_value=0, max_value=40, step=1)
+        Curricular_units_2nd_sem_approved = st.number_input("Curricular Units 2nd Sem (approved)", min_value=0, max_value=40, step=1)
+        Curricular_units_2nd_sem_evaluations = st.number_input("Curricular Units 2nd Sem (evaluations)", min_value=0, max_value=100, step=1)
         Curricular_units_2st_sem_grade = st.number_input("Curricular Units 2st Sem (grade)", min_value=0.0, max_value=20.0, step=0.1)
          
 
@@ -71,30 +71,30 @@ with st.form("prediction_form"):
 if submitted:
     input_data = pd.DataFrame([
         {
-            "Age at enrollment": Age_at_enrollment,
-            "Mothers_occupation": Mothers_occupation,
-            "Fathers_occupation": Fathers_occupation,
-            "Admission_grade": Admission_grade,
-            "Tuition fees up to date": Tuition_fees_up_to_date, 
-            "Previous qualification (grade)": Previous_qualification_grade,
-
-            "Course": Course,
-            "Curricular_units_1st_sem_enrolled": Curricular_units_1st_sem_enrolled,
-            "Curricular_units_1st_sem_evaluations": Curricular_units_1st_sem_evaluations,
-            "Curricular_units_1st_sem_grade": Curricular_units_1st_sem_grade,
-            "Curricular_units_1st_sem_approved": Curricular_units_1st_sem_approved,
-            "Curricular_units_2st_sem_enrolled": Curricular_units_2st_sem_enrolled,
-            "Curricular_units_2st_sem_evaluations": Curricular_units_2st_sem_evaluations,
+            "Curricular_units_2nd_sem_approved": Curricular_units_2nd_sem_approved,
+            "Tuition_fees_up_to_date": Tuition_fees_up_to_date,
             "Curricular_units_2st_sem_grade": Curricular_units_2st_sem_grade,
-            "Curricular_units_2st_sem_approved": Curricular_units_2st_sem_approved  
+            "Admission_grade": Admission_grade,
+            "Previous_qualification_grade": Previous_qualification_grade,
+            "Curricular_units_1st_sem_grade": Curricular_units_1st_sem_grade,
+            "Curricular_units_2nd_sem_enrolled": Curricular_units_2nd_sem_enrolled,
+
             
+            "Course": Course,
+            "Age_at_enrollment": Age_at_enrollment,
+            "Curricular_units_1st_sem_evaluations": Curricular_units_1st_sem_evaluations,
+            "Curricular_units_2nd_sem_evaluations": Curricular_units_2nd_sem_evaluations,
+            "Curricular_units_1st_sem_approved": Curricular_units_1st_sem_approved,
+            "Curricular_units_1st_sem_enrolled": Curricular_units_1st_sem_enrolled,
+            "Fathers_occupation": Fathers_occupation,
+            "Mothers_occupation": Mothers_occupation        
         }
     ])
 
     # Preprocess and predict
-    processed = pipeline.transform(input_data)
-    prediction = model.predict(processed)[0]
-    probability = model.predict_proba(processed).max()
+   # processed = pipeline.transform(input_data)
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data).max()
 
     # ------------------------------------------------------------
     # Display Results
