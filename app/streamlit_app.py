@@ -1,6 +1,8 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import shap
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 # ------------------------------------------------------------
@@ -119,19 +121,101 @@ if submitted:
     colA, colB = st.columns(2)
 
     with colA:
-        st.metric(
-            label="Predicted Category",
-            value=prediction_label,
-        )
+        st.metric("Predicted Category", prediction_label)
 
     with colB:
-        st.metric(
-            label="Confidence Score",
-            value=f"{probability:.2f}"
-        )
+        st.metric("Confidence Score", f"{probability:.2f}")
 
     st.success(
         f"🎯 The student is predicted to **{prediction_label}** with a confidence of **{probability:.2f}**."
     )
 
     st.info("Modify the inputs above and try again to explore different scenarios.")
+
+    # ------------------------------------------------------------
+    # DASHBOARD SECTION
+    # ------------------------------------------------------------
+    st.markdown("---")
+    st.header("📈 Student Dashboard")
+
+    colD1, colD2, colD3 = st.columns(3)
+
+    with colD1:
+        st.subheader("Semester Grades")
+        st.bar_chart(pd.DataFrame({
+            "Semester": ["1st", "2nd"],
+            "Grade": [Curricular_units_1st_sem_grade, Curricular_units_2st_sem_grade]
+        }).set_index("Semester"))
+
+    with colD2:
+        st.subheader("Curricular Progress")
+        st.bar_chart(pd.DataFrame({
+            "Status": ["Enrolled", "Evaluated", "Approved"],
+            "1st Sem": [
+                Curricular_units_1st_sem_enrolled,
+                Curricular_units_1st_sem_evaluations,
+                Curricular_units_1st_sem_approved
+            ]
+        }).set_index("Status"))
+
+    with colD3:
+        st.subheader("Tuition Status")
+        if Tuition_fees_up_to_date == 1:
+            st.success("Fees are up-to-date ✔")
+        else:
+            st.error("Fees NOT up-to-date ❌")
+
+    # ------------------------------------------------------------
+    # SHAP EXPLAINABILITY
+    # ------------------------------------------------------------
+    st.markdown("---")
+    st.header("🔍 Explainability (SHAP)")
+
+    # 1) Model is actually a pipeline → split it
+    preprocessor = model[:-1]     # all steps before final estimator
+    final_model = model[-1]       # last estimator (RF, XGB, etc.)
+
+    # 2) Transform the input for SHAP
+    X_transformed = preprocessor.transform(input_data)
+
+    # 3) Use TreeExplainer when possible
+    try:
+        explainer = shap.TreeExplainer(final_model)
+        shap_values = explainer.shap_values(X_transformed)
+
+    except Exception:
+        # Kernel fallback for non-tree models
+        def predict_fn(x):
+            return final_model.predict_proba(x)
+
+        background = X_transformed[:1]
+        explainer = shap.KernelExplainer(predict_fn, background)
+        shap_values = explainer.shap_values(X_transformed)
+
+    # 4) SHAP summary plot
+    st.subheader("Top Feature Contributions")
+    fig, ax = plt.subplots()
+
+    shap.summary_plot(
+        shap_values[prediction],
+        X_transformed,
+        feature_names=input_data.columns, 
+        plot_type="bar",
+        show=False
+    )
+    st.pyplot(fig)
+
+    # 5) SHAP force plot
+    st.subheader("Detailed SHAP Force Plot")
+
+    force_html = shap.force_plot(
+        explainer.expected_value[prediction],
+        shap_values[prediction],
+        X_transformed,
+        feature_names=input_data.columns,
+        matplotlib=False
+    ).html()
+
+    st.components.v1.html(force_html, height=350)
+
+    st.info("The SHAP plots above illustrate how each feature influenced the model's prediction for this student.")
