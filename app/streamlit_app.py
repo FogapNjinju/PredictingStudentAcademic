@@ -4,17 +4,16 @@ import pandas as pd
 from pathlib import Path
 
 # ------------------------------------------------------------
-# Streamlit UI
+# Streamlit UI Config
 # ------------------------------------------------------------
 st.set_page_config(
     page_title="Student Academic Performance Predictor",
     page_icon="📊",
-    layout="centered"
+    layout="wide"
 )
 
-
 # ------------------------------------------------------------
-# Load trained model and preprocessing pipeline
+# Load Model Artifacts
 # ------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "outputs" / "models" / "best_model.joblib"
@@ -28,80 +27,111 @@ def load_artifacts():
 
 model, pipeline = load_artifacts()
 
-
-st.title("📘 Student Academic Performance Prediction App")
-st.write(
-    "This application predicts the academic performance category of a student based on their demographics and study habits."
+# ------------------------------------------------------------
+# Title + Description
+# ------------------------------------------------------------
+st.markdown(
+    """
+    <h1 style='text-align:center; color:#2C3E50;'>📘 Student Academic Performance Predictor</h1>
+    <p style='text-align:center; font-size:18px;'>
+        Predict the academic performance category of a student based on key academic and demographic factors.
+    </p>
+    <hr style="border:1px solid #bbb;">
+    """,
+    unsafe_allow_html=True
 )
 
 # ------------------------------------------------------------
-# Input form
+# Input Form
 # ------------------------------------------------------------
-st.header("Student Information Input")
+st.header("📝 Student Information")
 
 with st.form("prediction_form"):
-    col1, col2 = st.columns(2)
+    st.subheader("Demographic & Background Information")
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        Age_at_enrollment = st.number_input("Age at enrollment", min_value=14, max_value=100, step=1)
-        Mothers_occupation = st.number_input("Mother's occupation", min_value=0, max_value=100, step=1)
-        Fathers_occupation = st.number_input("Father's occupation", min_value=0, max_value=100, step=1)
-        Admission_grade = st.number_input("Admission_grade", min_value=0.0, max_value=200.0, step=0.1)
-        Tuition_fees_up_to_date = st.selectbox("Tuition fees up to date", options=[0, 1])
-        Previous_qualification_grade = st.number_input("Previous qualification (grade)", min_value=0.0, max_value=20.0, step=0.1)
+        Age_at_enrollment = st.number_input("Age at Enrollment", 14, 100, 18)
+        Mothers_occupation = st.number_input("Mother's Occupation", 0, 100)
+        Fathers_occupation = st.number_input("Father's Occupation", 0, 100)
 
     with col2:
-        Course = st.number_input("Course", min_value=171, max_value=9119, step=1)
-        Curricular_units_1st_sem_enrolled = st.number_input("Curricular Units 1st Sem (enrolled)", min_value=0, max_value=40, step=1)
-        Curricular_units_1st_sem_approved = st.number_input("Curricular Units 1st Sem (approved)", min_value=0, max_value=40, step=1)
-        Curricular_units_1st_sem_evaluations = st.number_input("Curricular Units 1st Sem (evaluations)", min_value=0, max_value=100, step=1)
-        Curricular_units_1st_sem_grade = st.number_input("Curricular Units 1st Sem (grade)", min_value=0.0, max_value=20.0, step=0.1)
+        Admission_grade = st.number_input("Admission Grade", 0.0, 200.0)
+        Tuition_fees_up_to_date = st.selectbox("Tuition Fees Up-to-Date?", [0, 1])
+        Previous_qualification_grade = st.number_input("Previous Qualification Grade", 0.0, 20.0)
 
-        Curricular_units_2nd_sem_enrolled = st.number_input("Curricular Units 2nd Sem (enrolled)", min_value=0, max_value=40, step=1)
-        Curricular_units_2nd_sem_approved = st.number_input("Curricular Units 2nd Sem (approved)", min_value=0, max_value=40, step=1)
-        Curricular_units_2nd_sem_evaluations = st.number_input("Curricular Units 2nd Sem (evaluations)", min_value=0, max_value=100, step=1)
-        Curricular_units_2st_sem_grade = st.number_input("Curricular Units 2st Sem (grade)", min_value=0.0, max_value=20.0, step=0.1)
-         
+    with col3:
+        Course = st.number_input("Course ID", 171, 9119)
+        Curricular_units_1st_sem_enrolled = st.number_input("1st Sem Units Enrolled", 0, 40)
+        Curricular_units_1st_sem_approved = st.number_input("1st Sem Units Approved", 0, 40)
 
-    submitted = st.form_submit_button("Predict Performance")
+    st.markdown("---")
+    st.subheader("🎓 Academic Performance Inputs")
+
+    col4, col5 = st.columns(2)
+
+    with col4:
+        Curricular_units_1st_sem_evaluations = st.number_input("1st Sem Evaluations", 0, 100)
+        Curricular_units_1st_sem_grade = st.number_input("1st Sem Grade", 0.0, 20.0)
+        Curricular_units_2nd_sem_enrolled = st.number_input("2nd Sem Units Enrolled", 0, 40)
+
+    with col5:
+        Curricular_units_2nd_sem_approved = st.number_input("2nd Sem Units Approved", 0, 40)
+        Curricular_units_2nd_sem_evaluations = st.number_input("2nd Sem Evaluations", 0, 100)
+        Curricular_units_2st_sem_grade = st.number_input("2nd Sem Grade", 0.0, 20.0)
+
+    submitted = st.form_submit_button("🔍 Predict Performance", use_container_width=True)
 
 # ------------------------------------------------------------
 # Prediction Logic
 # ------------------------------------------------------------
 if submitted:
-    input_data = pd.DataFrame([
-        {
-            "Curricular_units_2nd_sem_approved": Curricular_units_2nd_sem_approved,
-            "Tuition_fees_up_to_date": Tuition_fees_up_to_date,
-            "Curricular_units_2st_sem_grade": Curricular_units_2st_sem_grade,
-            "Admission_grade": Admission_grade,
-            "Previous_qualification_grade": Previous_qualification_grade,
-            "Curricular_units_1st_sem_grade": Curricular_units_1st_sem_grade,
-            "Curricular_units_2nd_sem_enrolled": Curricular_units_2nd_sem_enrolled,
+    input_data = pd.DataFrame([{
+        "Curricular_units_2nd_sem_approved": Curricular_units_2nd_sem_approved,
+        "Tuition_fees_up_to_date": Tuition_fees_up_to_date,
+        "Curricular_units_2st_sem_grade": Curricular_units_2st_sem_grade,
+        "Admission_grade": Admission_grade,
+        "Previous_qualification_grade": Previous_qualification_grade,
+        "Curricular_units_1st_sem_grade": Curricular_units_1st_sem_grade,
+        "Curricular_units_2nd_sem_enrolled": Curricular_units_2nd_sem_enrolled,
+        "Course": Course,
+        "Age_at_enrollment": Age_at_enrollment,
+        "Curricular_units_1st_sem_evaluations": Curricular_units_1st_sem_evaluations,
+        "Curricular_units_2nd_sem_evaluations": Curricular_units_2nd_sem_evaluations,
+        "Curricular_units_1st_sem_approved": Curricular_units_1st_sem_approved,
+        "Curricular_units_1st_sem_enrolled": Curricular_units_1st_sem_enrolled,
+        "Fathers_occupation": Fathers_occupation,
+        "Mothers_occupation": Mothers_occupation        
+    }])
 
-            
-            "Course": Course,
-            "Age_at_enrollment": Age_at_enrollment,
-            "Curricular_units_1st_sem_evaluations": Curricular_units_1st_sem_evaluations,
-            "Curricular_units_2nd_sem_evaluations": Curricular_units_2nd_sem_evaluations,
-            "Curricular_units_1st_sem_approved": Curricular_units_1st_sem_approved,
-            "Curricular_units_1st_sem_enrolled": Curricular_units_1st_sem_enrolled,
-            "Fathers_occupation": Fathers_occupation,
-            "Mothers_occupation": Mothers_occupation        
-        }
-    ])
-
-    # Preprocess and predict
-   # processed = pipeline.transform(input_data)
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data).max()
+
+    label_map = {0: "Dropout", 1: "Graduate", 2: "Enrolled"}
+    prediction_label = label_map.get(prediction, "Unknown")
 
     # ------------------------------------------------------------
     # Display Results
     # ------------------------------------------------------------
-    st.subheader("Prediction Result")
+    st.markdown("---")
+    st.header("📊 Prediction Results")
 
-    st.success(f"🎯 Predicted Performance Category: **{prediction}**")
-    st.write(f"Prediction Confidence: **{probability:.2f}**")
+    colA, colB = st.columns(2)
 
-    st.info("You can modify the inputs and try again to see how changes affect prediction results.")
+    with colA:
+        st.metric(
+            label="Predicted Category",
+            value=prediction_label,
+        )
+
+    with colB:
+        st.metric(
+            label="Confidence Score",
+            value=f"{probability:.2f}"
+        )
+
+    st.success(
+        f"🎯 The student is predicted to **{prediction_label}** with a confidence of **{probability:.2f}**."
+    )
+
+    st.info("Modify the inputs above and try again to explore different scenarios.")
